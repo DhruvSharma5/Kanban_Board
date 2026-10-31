@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TaskFlow – Kanban Board</title>
+<style>
+:root{--bg1:#dbe5f3;--bg2:#eef1fb;--app:#fff;--panel:#f6f8fc;--text:#1b2033;--muted:#6a7290;--line:#e4e8f2;--accent:#4f6df5;--accent2:#7b5cf0;--field:#f1f4fa;
+--high-bg:#ffe8e5;--high-pill:#ffcfc9;--high-tx:#a12020;--med-bg:#fff5d1;--med-pill:#fde58c;--med-tx:#7a5200;--low-bg:#e2f6ec;--low-pill:#bde8d0;--low-tx:#14633f;
+--shadow:0 20px 60px rgba(40,60,110,.15);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#0d0f18;--bg2:#141726;--app:#1a1d2e;--panel:#14172a;--text:#eceefb;--muted:#9aa0c3;--line:#2a2e48;--accent:#7388ff;--field:#232741;
+--high-bg:#3a2024;--high-pill:#5a2a30;--high-tx:#ffb4ae;--med-bg:#37301a;--med-pill:#574a1c;--med-tx:#ffe08a;--low-bg:#17322a;--low-pill:#1f4d3b;--low-tx:#9ae6c1;--shadow:0 20px 60px rgba(0,0,0,.5);color-scheme:dark}}
+:root[data-theme="dark"]{--bg1:#0d0f18;--bg2:#141726;--app:#1a1d2e;--panel:#14172a;--text:#eceefb;--muted:#9aa0c3;--line:#2a2e48;--accent:#7388ff;--field:#232741;
+--high-bg:#3a2024;--high-pill:#5a2a30;--high-tx:#ffb4ae;--med-bg:#37301a;--med-pill:#574a1c;--med-tx:#ffe08a;--low-bg:#17322a;--low-pill:#1f4d3b;--low-tx:#9ae6c1;--shadow:0 20px 60px rgba(0,0,0,.5);color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--text);font:15px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 14px}
+button,input,select,textarea{font:inherit;color:var(--text)}
+.app{max-width:1240px;margin:0 auto;background:var(--app);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.top{display:flex;align-items:center;gap:16px;padding:18px 28px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-size:1.35rem;font-weight:700}
+.logo i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center}
+.search{flex:1 1 260px;position:relative}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search input{width:100%;background:var(--field);border:1px solid transparent;border-radius:12px;padding:11px 14px 11px 42px;outline:0;transition:.2s}
+.search input:focus{border-color:var(--accent);background:var(--app)}
+.btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:0;border-radius:12px;padding:11px 18px;cursor:pointer;font-weight:600;box-shadow:0 6px 16px rgba(79,109,245,.35);transition:.15s}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:var(--field);color:var(--text);box-shadow:none}
+.icon{width:42px;height:42px;padding:0;display:grid;place-items:center}
+.sub{display:flex;align-items:center;gap:14px;padding:16px 28px 0;flex-wrap:wrap}
+.stats{display:flex;gap:10px;flex:1 1 300px;align-items:center}
+.stat{font-size:.85rem;color:var(--muted)}.stat b{color:var(--text);font-size:1.05rem}
+.prog{flex:1;min-width:90px;height:8px;border-radius:9px;background:var(--field);overflow:hidden}
+.prog span{display:block;height:100%;width:0;background:linear-gradient(90deg,#30a46c,#5fd3a0);transition:width .4s}
+.filters{display:flex;gap:8px}
+.filters select{background:var(--field);border:0;border-radius:10px;padding:9px 12px;cursor:pointer}
+#msg{padding:0 28px}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:18px 28px 28px;align-items:start}
+.board.one{grid-template-columns:1fr}
+.col h2{margin:0 0 12px;font-size:1.05rem;display:flex;align-items:center;gap:9px}
+.col h2 i{width:10px;height:10px;border-radius:50%;background:var(--dot)}
+.count{margin-left:auto;background:var(--field);color:var(--muted);border-radius:99px;padding:0 10px;font-size:.8rem;font-weight:600}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px;min-height:160px;transition:.2s}
+.col.over .list{border-color:var(--accent);background:var(--field)}
+.card{border-radius:14px;padding:14px;margin-bottom:12px;cursor:grab;background:var(--low-bg);animation:pop .25s ease;transition:transform .15s,box-shadow .15s}
+.card.high{background:var(--high-bg)}.card.medium{background:var(--med-bg)}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(30,40,80,.12)}
+.card.dragging{opacity:.45}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.card h3{margin:0 0 4px;font-size:1.02rem;font-weight:650;word-break:break-word}
+.card p{margin:0 0 10px;color:var(--muted);font-size:.88rem;word-break:break-word}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.date{font-size:.82rem;color:var(--muted);display:flex;gap:5px;align-items:center}
+.date.od{color:#e5484d;font-weight:600}
+.pill{margin-left:auto;font-size:.76rem;font-weight:650;border-radius:8px;padding:2px 10px;background:var(--low-pill);color:var(--low-tx)}
+.high .pill{background:var(--high-pill);color:var(--high-tx)}.medium .pill{background:var(--med-pill);color:var(--med-tx)}
+.acts{display:flex;gap:6px}
+.acts select{flex:1;min-width:0;background:rgba(255,255,255,.55);border:0;border-radius:8px;padding:5px 6px;font-size:.8rem;cursor:pointer;color:#1b2033}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .acts select{background:rgba(0,0,0,.3);color:var(--text)}}
+:root[data-theme="dark"] .acts select{background:rgba(0,0,0,.3);color:var(--text)}
+.acts button{background:rgba(255,255,255,.55);border:0;border-radius:8px;width:30px;height:28px;cursor:pointer;display:grid;place-items:center}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .acts button{background:rgba(0,0,0,.3)}}
+:root[data-theme="dark"] .acts button{background:rgba(0,0,0,.3)}
+.acts button:hover{background:var(--accent);color:#fff}.acts button.del:hover{background:#e5484d}
+.empty{text-align:center;color:var(--muted);padding:26px 6px;font-size:.88rem}
+.state{text-align:center;color:var(--muted);padding:34px 10px;margin-top:16px;border:2px dashed var(--line);border-radius:16px}
+.state b{color:var(--text);font-size:1.1rem}
+dialog{border:0;border-radius:20px;background:var(--app);color:var(--text);width:min(460px,92vw);padding:24px;box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(10,14,30,.55);backdrop-filter:blur(3px)}
+form label{display:block;font-size:.82rem;font-weight:600;margin:12px 0 5px;color:var(--muted)}
+form input,form select,form textarea{width:100%;background:var(--field);border:1px solid transparent;border-radius:10px;padding:10px 12px;outline:0}
+form input:focus,form select:focus,form textarea:focus{border-color:var(--accent)}
+form .two{display:flex;gap:12px}form .two>div{flex:1}
+.err{color:#e5484d;font-size:.8rem;min-height:1.1em;margin-top:3px}
+.foot{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+@media(max-width:860px){.board{grid-template-columns:1fr;padding:16px}.top,.sub,#msg{padding-left:16px;padding-right:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="logo"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>TaskFlow</div>
+    <div class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search tasks by title…" aria-label="Search tasks"></div>
+    <button class="btn ghost icon" id="theme" title="Toggle theme" aria-label="Toggle theme"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+    <button class="btn" id="add">+ Add task</button>
+  </div>
+  <div class="sub">
+    <div class="stats"><span class="stat"><b id="sT">0</b> tasks</span><span class="stat"><b id="sD">0</b> done</span><div class="prog"><span id="bar"></span></div></div>
+    <div class="filters">
+      <select id="fp" aria-label="Filter by priority"><option value="all">All priorities</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+      <select id="fs" aria-label="Filter by status"><option value="all">All statuses</option><option value="todo">To Do</option><option value="progress">In Progress</option><option value="done">Completed</option></select>
+    </div>
+  </div>
+  <div id="msg"></div>
+  <div class="board" id="board"></div>
+</div>
+
+<dialog id="dlg">
+  <form id="form" novalidate>
+    <h2 id="dt" style="margin:0 0 2px">Add task</h2>
+    <label for="title">Title *</label><input id="title" maxlength="80" placeholder="e.g. Design new homepage">
+    <div class="err" id="e1"></div>
+    <label for="desc">Description</label><textarea id="desc" rows="3" maxlength="300" placeholder="Optional details…"></textarea>
+    <div class="two">
+      <div><label for="pri">Priority</label><select id="pri"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+      <div><label for="due">Due date</label><input id="due" type="date"></div>
+    </div>
+    <div class="err" id="e2"></div>
+    <div class="foot"><button type="button" class="btn ghost" id="cancel">Cancel</button><button class="btn" type="submit">Save task</button></div>
+  </form>
+</dialog>
+
+<script>
+const COLS=[["todo","To Do","#5b8def"],["progress","In Progress","#f5a524"],["done","Completed","#30a46c"]];
+const KEY="kanban.tasks.v1";
+let tasks=[],editId=null;
+const $=id=>document.getElementById(id);
+function load(){try{const r=localStorage.getItem(KEY);tasks=r?JSON.parse(r):[]}catch(e){tasks=[]}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(tasks))}catch(e){}}
+function esc(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function fmt(d){const [y,m,da]=d.split("-");return new Date(y,m-1,da).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}
+const cal='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>';
+const pen='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
+const bin='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>';
+function render(){
+  const q=$("q").value.trim().toLowerCase(),fp=$("fp").value,fs=$("fs").value;
+  const list=tasks.filter(t=>t.title.toLowerCase().includes(q)&&(fp==="all"||t.priority===fp)&&(fs==="all"||t.status===fs));
+  const done=tasks.filter(t=>t.status==="done").length;
+  $("sT").textContent=tasks.length;$("sD").textContent=done;$("bar").style.width=(tasks.length?done/tasks.length*100:0)+"%";
+  $("msg").innerHTML=!tasks.length?'<div class="state"><b>No tasks yet</b><br>Click “Add task” to create your first one.</div>':!list.length?'<div class="state"><b>No results found</b><br>Try a different search or clear the filters.</div>':"";
+  const cols=COLS.filter(c=>fs==="all"||c[0]===fs);
+  $("board").className="board"+(cols.length===1?" one":"");
+  $("board").innerHTML=cols.map(([k,n,c])=>{
+    const items=list.filter(t=>t.status===k);
+    return `<section class="col" data-s="${k}" style="--dot:${c}"><h2><i></i>${n}<span class="count">${items.length}</span></h2><div class="list">${items.map(card).join("")||'<div class="empty">Nothing here yet</div>'}</div></section>`}).join("");
+  document.querySelectorAll(".card").forEach(c=>{
+    c.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",c.dataset.id);c.classList.add("dragging")});
+    c.addEventListener("dragend",()=>c.classList.remove("dragging"))});
+  document.querySelectorAll(".col").forEach(c=>{
+    c.addEventListener("dragover",e=>{e.preventDefault();c.classList.add("over")});
+    c.addEventListener("dragleave",()=>c.classList.remove("over"));
+    c.addEventListener("drop",e=>{e.preventDefault();c.classList.remove("over");move(e.dataTransfer.getData("text/plain"),c.dataset.s)})});
+}
+function card(t){
+  const today=new Date().toISOString().slice(0,10),od=t.due&&t.due<today&&t.status!=="done";
+  return `<article class="card ${t.priority}" draggable="true" data-id="${t.id}">
+  <h3>${esc(t.title)}</h3>${t.desc?`<p>${esc(t.desc)}</p>`:""}
+  <div class="row">${t.due?`<span class="date ${od?"od":""}">${cal}${fmt(t.due)}${od?" · overdue":""}</span>`:""}<span class="pill">${t.priority[0].toUpperCase()+t.priority.slice(1)}</span></div>
+  <div class="acts"><select data-move="${t.id}" aria-label="Move task">${COLS.map(([k,n])=>`<option value="${k}" ${k===t.status?"selected":""}>${n}</option>`).join("")}</select>
+  <button data-edit="${t.id}" title="Edit" aria-label="Edit">${pen}</button><button class="del" data-del="${t.id}" title="Delete" aria-label="Delete">${bin}</button></div></article>`}
+function move(id,s){const t=tasks.find(x=>x.id===id);if(t&&t.status!==s){t.status=s;save();render()}}
+function openDlg(t){
+  editId=t?t.id:null;$("dt").textContent=t?"Edit task":"Add task";
+  $("title").value=t?t.title:"";$("desc").value=t?t.desc:"";$("pri").value=t?t.priority:"medium";$("due").value=t?t.due:"";
+  $("e1").textContent=$("e2").textContent="";$("dlg").showModal();$("title").focus()}
+$("add").onclick=()=>openDlg();
+$("cancel").onclick=()=>$("dlg").close();
+$("form").onsubmit=e=>{
+  e.preventDefault();
+  const title=$("title").value.trim(),due=$("due").value,today=new Date().toISOString().slice(0,10),t=editId&&tasks.find(x=>x.id===editId);
+  $("e1").textContent=title?"":"Title is required.";
+  $("e2").textContent=(due&&due<today&&(!t||t.due!==due))?"Due date can’t be in the past.":"";
+  if($("e1").textContent||$("e2").textContent)return;
+  if(t)Object.assign(t,{title,desc:$("desc").value.trim(),priority:$("pri").value,due});
+  else tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title,desc:$("desc").value.trim(),priority:$("pri").value,due,status:"todo"});
+  save();render();$("dlg").close()};
+$("board").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.edit)openDlg(tasks.find(t=>t.id===b.dataset.edit));
+  if(b.dataset.del&&confirm("Delete this task?")){tasks=tasks.filter(t=>t.id!==b.dataset.del);save();render()}});
+$("board").addEventListener("change",e=>{if(e.target.dataset.move)move(e.target.dataset.move,e.target.value)});
+["q","fp","fs"].forEach(i=>$(i).addEventListener("input",render));
+$("theme").onclick=()=>{const d=document.documentElement;d.dataset.theme=getComputedStyle(d).colorScheme==="dark"?"light":"dark"};
+load();render();
+</script>
+</body>
+</html>

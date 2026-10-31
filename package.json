@@ -1,0 +1,7 @@
+{
+  "name": "taskflow-kanban-board",
+  "version": "1.0.0",
+  "description": "Responsive Kanban task board (HTML/CSS/JS, LocalStorage)",
+  "scripts": { "start": "npx serve ." },
+  "license": "MIT"
+}
